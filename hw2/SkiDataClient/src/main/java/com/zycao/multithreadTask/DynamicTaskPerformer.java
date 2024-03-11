@@ -44,11 +44,11 @@ public class DynamicTaskPerformer extends TaskPerformer{
 
 
     public static void main(String[] args) throws InterruptedException {
-        int eventQueueCapacity = 2000;
+        int eventQueueCapacity = 5000;
         int numEvents = 200000;
         int firstPhaseRequests = 1000;
         int initialThreadPoolSize = 32;
-        int maxThreadPoolSize = 32;
+        int maxThreadPoolSize = 128;
         DynamicTaskPerformer performer = new DynamicTaskPerformer(eventQueueCapacity, numEvents, initialThreadPoolSize, maxThreadPoolSize,firstPhaseRequests);
         performer.performTasks();
     }

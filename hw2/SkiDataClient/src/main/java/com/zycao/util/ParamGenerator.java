@@ -7,7 +7,7 @@ import java.util.Random;
 public class ParamGenerator {
     private static final Random random = new Random();
     //private static final String baseUrl = "http://localhost:8080/skiers/";
-    private static final String baseUrl = "http://54.185.47.73:8080/skiers/";
+    private static final String baseUrl = "http://lb-2056947098.us-west-2.elb.amazonaws.com/skiers/";
 
 
     public static SkierLiftRideEvent generateRandomEvent() {

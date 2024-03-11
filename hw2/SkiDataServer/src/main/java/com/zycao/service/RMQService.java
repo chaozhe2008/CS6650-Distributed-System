@@ -45,7 +45,7 @@ public class RMQService {
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
                         String message = messageQueue.take(); // Block until a message is available
-                        publishMessage(exchangeName, "", message); // Assuming exchangeName and routingKey. Adjust as needed.
+                        publishMessage(exchangeName, "", message);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         logger.error("Queue processing thread interrupted", e);

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import com.zycao.entity.SkiDataPayload;
 import com.zycao.rmqFactory.RMQFactoryConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,30 +17,28 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.zycao.rmqFactory.RMQFactoryConfig.QUEUE_NAME;
-import static com.zycao.rmqFactory.RMQFactoryConfig.EXCHANGE_NAME;
 
 public class RMQConsumer {
     private static final ConcurrentHashMap<Integer, List<SkiDataPayload>> skierDataMap = new ConcurrentHashMap<>();
     private static ExecutorService threadPool;
     private static ConnectionFactory factory;
     private static Connection connection;
-    private static final AtomicLong messagesProcessed = new AtomicLong(0); // Atomic counter for thread-safe increments
+    private static final AtomicLong messagesProcessed = new AtomicLong(0);
+    private static final Logger logger = LoggerFactory.getLogger(RMQConsumer.class);
 
 
 
     public static void main(String[] argv) throws Exception {
         int threadPoolSize = 8; //Default size
-
-        // Check if an argument was passed to the program
         if (argv.length > 0) {
             try {
                 // Parse the first argument as an integer for the thread pool size
                 threadPoolSize = Integer.parseInt(argv[0]);
             } catch (NumberFormatException e) {
-                System.err.println("Invalid thread pool size provided, using default: " + threadPoolSize);
+                logger.error("Invalid thread pool size provided, using default: {}", threadPoolSize);
             }
         }
-        System.out.println("Consumers Ready, ThreadPool Size: " + threadPoolSize);
+        logger.info("Consumers Ready, ThreadPool Size: {}", threadPoolSize);
 
         threadPool = Executors.newFixedThreadPool(threadPoolSize);
         RMQFactoryConfig factoryConfig = new RMQFactoryConfig();
@@ -76,14 +76,13 @@ public class RMQConsumer {
         try {
             channel = connection.createChannel();
             channel.queueDeclare(QUEUE_NAME, true, false, false, null);
-            //System.out.println("Thread ID: " + Thread.currentThread().getId() + " is waiting for messages.");
-            channel.basicQos(1); // Fair dispatch
+            channel.basicQos(1);
 
             Consumer consumer = new DefaultConsumer(channel) {
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                     String message = new String(body, "UTF-8");
-                    System.out.println("Consumer " + consumerId + " on Thread ID: " + Thread.currentThread().getId() + " received a message ");
+                    logger.info("Consumer {} + on Thread ID: {}", consumerId, Thread.currentThread().getId());
                     processMessage(message);
                 }
             };
@@ -109,7 +108,7 @@ public class RMQConsumer {
             SkiDataPayload payload = mapper.readValue(jsonPayload, SkiDataPayload.class);
             skierDataMap.computeIfAbsent(payload.getSkierID(), k -> new ArrayList<>()).add(payload);
             long totalProcessed = messagesProcessed.incrementAndGet();
-            System.out.println("Total messages processed: " + totalProcessed);
+            logger.info("Total messages processed: {}", totalProcessed);
         } catch (IOException e) {
             e.printStackTrace();
         }
